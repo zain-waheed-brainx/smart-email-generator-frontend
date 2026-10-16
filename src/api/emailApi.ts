@@ -6,6 +6,8 @@ export interface GenerateEmailRequest {
   emailType: string
   tone: string
   details: string
+  previousEmail?: string
+  instruction?: string
 }
 
 export interface GenerateEmailResponse {

@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# BrainX code review (local working file, not shared)
+.code-reviews/brainx-review.md

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   generateEmail,
   type GenerateEmailRequest,
@@ -11,6 +11,14 @@ export function useGenerateEmail() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const controllerRef = useRef<AbortController | null>(null)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false
+      controllerRef.current?.abort()
+    }
+  }, [])
 
   async function generate(payload: GenerateEmailRequest) {
     const controller = new AbortController()
@@ -23,18 +31,22 @@ export function useGenerateEmail() {
     try {
       const result = await generateEmail(
         payload,
-        (chunk) => setStreamingText((prev) => prev + chunk),
+        (chunk) => {
+          if (mountedRef.current) setStreamingText((prev) => prev + chunk)
+        },
         controller.signal,
       )
-      setData(result)
+      if (mountedRef.current) setData(result)
       return result
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return null
-      const message = err instanceof Error ? err.message : 'Failed to generate email'
-      setError(message)
+      if (mountedRef.current) {
+        const message = err instanceof Error ? err.message : 'Failed to generate email'
+        setError(message)
+      }
       return null
     } finally {
-      setLoading(false)
+      if (mountedRef.current) setLoading(false)
       controllerRef.current = null
     }
   }
